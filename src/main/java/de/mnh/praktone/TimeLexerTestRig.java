@@ -5,6 +5,9 @@ import org.antlr.v4.runtime.ANTLRFileStream;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Token;
+import org.stringtemplate.v4.ST;
+import org.stringtemplate.v4.STGroup;
+import org.stringtemplate.v4.STGroupFile;
 
 public class TimeLexerTestRig {
     public static void main(String[] args) throws Exception {
@@ -15,12 +18,23 @@ public class TimeLexerTestRig {
             input = new ANTLRInputStream(System.in);
         }
         TimeLexer lex = new TimeLexer(input);
+        STGroup group = new STGroupFile("praktone.stg");
+        ST st;
         Token t;
+
+        // Suppress "token recognition error" messages
+        lex.removeErrorListeners();
 
         do {
             t = lex.nextToken();
+
             if (t.getType() == TimeLexer.TIME) {
-                System.out.println("Token: " + t + ", Type: " + lex.getTokenNames()[t.getType()]);
+                st = group.getInstanceOf("time");
+
+                st.add("val", t.getText());
+                st.add("row", t.getCharPositionInLine());
+                st.add("col", t.getLine());
+                System.out.println(st.render());
             }
         } while (t.getType() != Token.EOF);
     }
