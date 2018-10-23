@@ -145,7 +145,7 @@ public class HalsteadLexerTestRig {
         int N = N1 + N2;
 
         // Halstead-Volume
-        int V = N * LongMath.log2(n, RoundingMode.HALF_EVEN);
+        int V = N * LongMath.log2(n, RoundingMode.DOWN);
         // Difficulty
         double D = (n1 / (double) 2) * (N2 / (double) n2);
         // Efford

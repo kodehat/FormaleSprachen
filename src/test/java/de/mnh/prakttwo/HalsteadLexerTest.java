@@ -16,9 +16,9 @@ public class HalsteadLexerTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {
                 { "Beispiel.c", 2340 },
-                { "eval1.c", 1674 },
+                { "eval1.c", 1395 },
                 { "extract.c", 220 },
-                { "ggt1.c", 128 },
+                { "ggt1.c", 96 },
                 { "ggt2.c", 144 },
                 { "main.c", 156 },
         });
