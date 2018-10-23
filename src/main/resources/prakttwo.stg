@@ -1,8 +1,17 @@
+halstead(name, operands_map, operators_map, n1, n2, n, N1, N2, N, V, D, E) ::= <<
 
-time(val, row, col) ::= <<
-Time: <val>, Row: <row>, Column: <col>
->>
+Name of program: <name>
 
-ip(val, row, col) ::= <<
-IP: <val>, Row: <row>, Column: <col>
+Operands multiset:
+<operands_map.keys:{k | <k>: <operands_map.(k)>}; separator="\n">
+
+Operators multiset:
+<operators_map.keys:{k | <k>: <operators_map.(k)>}; separator="\n">
+
+n: <n1> + <n2> = <n>
+N: <N1> + <N2> = <N>
+V: <N> * log2 <n> = <V>
+D: (<n1> / 2) * (<N2> / <n2>) = <D>
+E: <D> * <V> = <E>
+
 >>

@@ -14,7 +14,7 @@ fragment TYPESPEC : 'bool' | 'char' | 'double' | 'float' | 'int' | 'long' | 'sho
                   ;
 
 fragment IDENTIFIER
-                  : LETTER (LETTER | DIGIT)*
+                  : LETTER_AND_UNDERSCORE (LETTER_AND_UNDERSCORE | DIGIT)*
                   ;
 
 fragment CONSTANT : DIGIT+ | '\'' .*? '\'' | '"' .*? '"'
@@ -59,7 +59,8 @@ fragment INCLUDE  : '#include' .*? '\n'
                   ;
 
 // OTHER
-fragment LETTER   : [a-zA-Z_]
+fragment LETTER_AND_UNDERSCORE
+                  : [a-zA-Z_]
                   ;
 
 fragment DIGIT    : [0-9]
