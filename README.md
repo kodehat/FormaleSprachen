@@ -3,4 +3,5 @@ Repository für das Praktikum des Kurses "Formale Sprachen und Übersetzertechni
 
 ## Wo liegt welche Aufgabe?
 
-- Praktikum 1: `src\main\{antlr4,java}\de\codehat\praktone`
+- Praktikum 1: `src\main\{antlr4,java}\de\mnh\praktone`
+- Praktikum 2: `src\main\{antlr4,java}\de\mnh\prakttwo`

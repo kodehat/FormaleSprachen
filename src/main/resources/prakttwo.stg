@@ -1,0 +1,8 @@
+
+time(val, row, col) ::= <<
+Time: <val>, Row: <row>, Column: <col>
+>>
+
+ip(val, row, col) ::= <<
+IP: <val>, Row: <row>, Column: <col>
+>>
