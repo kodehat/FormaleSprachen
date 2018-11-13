@@ -46,15 +46,15 @@ Die Grammatik ist **eindeutig**.
 
 ### c)
 
-`prog --> ...` ist **rechtsrekursiv**.
+`prog --> stat | stat prog` ist **rechtsrekursiv**.
 
-`stat --> ...` ist nicht rekursiv.
+`stat --> expr NL | NL` ist nicht rekursiv.
 
-`expr --> ...` ist **linksrekursiv**.
+`expr --> term | term + term | term - term` ist **linksrekursiv**.
 
-`term --> ...` ist **linksrekursiv**.
+`term --> fact | fact * fact | fact / fact` ist **linksrekursiv**.
 
-`fact --> ...` ist nicht rekursiv.
+`fact --> + fact | - fact | (expr) | INT` ist **rechtsrekursiv**.
 
 ### d)
 
