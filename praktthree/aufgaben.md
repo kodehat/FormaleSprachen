@@ -46,17 +46,21 @@ Die Grammatik ist **eindeutig**.
 
 ### c)
 
-`prog --> stat | stat prog` ist **rechtsrekursiv**.
+`prog --> stat | stat prog` ist **iterativ**.
 
 `stat --> expr NL | NL` ist nicht rekursiv.
 
-`expr --> term | term + term | term - term` ist **linksrekursiv**.
+`expr --> term | term + term | term - term` ist **iterativ**.
 
-`term --> fact | fact * fact | fact / fact` ist **linksrekursiv**.
+`term --> fact | fact * fact | fact / fact` ist **rechtsrekursiv**.
 
 `fact --> + fact | - fact | (expr) | INT` ist **rechtsrekursiv**.
 
 ### d)
+
+`+, -` Prioritätsebene 1, linksassoziativ
+
+`*, /` Prioritätsebene 2, linksassoziativ
 
 ### e)
 
