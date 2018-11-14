@@ -1,10 +1,9 @@
 grammar ExerciseThree;
 
-expr: <assoc=right> expr '^' expr
-    | expr '*' expr
-    | expr '/' expr
-    | expr '+' expr
-    | expr '-' expr
+expr: '(' expr ')'
+    | <assoc=right> expr '^' expr
+    | expr ('*' | '/') expr
+    | expr ('+' | '-') expr
     | INT
     ;
 
