@@ -9,6 +9,7 @@ import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
@@ -25,6 +26,15 @@ public class CalcBTest {
                 { "5+2 n", 7 },
                 { "3+7 n", 10 },
                 { "3-7*2 n", -11 },
+                { "3==2+2-1 n", 1},
+                { "5==12*45/3 n", 0},
+                { "5>4-2 n", 1},
+                { "10>22*2 n", 0},
+                { "10<100/2 n", 1},
+                { "10<2^2 n", 0},
+                { "a=2+5 n a+6 n", 13},
+                { "2==2 ? 5+5 : 4+4 n", 10},
+                { "3>2*5 ? 5+5 : 4+4 n", 8},
         });
     }
 
@@ -41,7 +51,7 @@ public class CalcBTest {
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         CalcBParser parser = new CalcBParser(tokens);
         parser.setBuildParseTree(false); // don't build tree
-        int output = parser.stat().expr.v;
+        int output = parser.prog().v;
 
         assertEquals(this.result, output);
     }

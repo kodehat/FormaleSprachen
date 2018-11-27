@@ -22,7 +22,7 @@ public class CalcA {
         CalcALexer lexer = new CalcALexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         CalcAParser parser = new CalcAParser(tokens);
-        ParseTree tree = parser.stat();
+        ParseTree tree = parser.prog();
         CalcAExprVisitor visitor = new CalcAExprVisitor();
         visitor.visit(tree);
     }

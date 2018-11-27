@@ -25,6 +25,17 @@ public class CalcATest {
                 { "5+2 n", 7 },
                 { "3+7 n", 10 },
                 { "3-7*2 n", -11 },
+                { "3==2+2-1 n", 1},
+                { "5==12*45/3 n", 0},
+                { "5>4-2 n", 1},
+                { "10>22*2 n", 0},
+                { "10<100/2 n", 1},
+                { "10<2^2 n", 0},
+                { "a=2+5 n a+6 n", 13},
+                { "2==2 ? 5+5 : 4+4 n", 10},
+                { "3>2*5 ? 5+5 : 4+4 n", 8},
+                { "if (10-10==0) 2+2 n else 4+4 n", 4},
+                { "if (10*10>1000) 2+2 n else 4+4 n", 8},
         });
     }
 
@@ -40,7 +51,7 @@ public class CalcATest {
         CalcALexer lexer = new CalcALexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         CalcAParser parser = new CalcAParser(tokens);
-        ParseTree tree = parser.stat();
+        ParseTree tree = parser.prog();
         CalcAExprVisitor visitor = new CalcAExprVisitor();
         int output = visitor.visit(tree);
 

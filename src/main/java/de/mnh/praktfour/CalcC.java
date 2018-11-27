@@ -23,7 +23,7 @@ public class CalcC {
         CalcCLexer lexer = new CalcCLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         CalcCParser parser = new CalcCParser(tokens);
-        ParseTree tree = parser.stat();
+        ParseTree tree = parser.prog();
         ParseTreeWalker walker = new ParseTreeWalker();
         CalcCListenerWithProps calcProp = new CalcCListenerWithProps();
         walker.walk(calcProp, tree);

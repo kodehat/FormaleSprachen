@@ -29,7 +29,7 @@ public class CalcB {
             lexer.setCharPositionInLine(0);
             CommonTokenStream tokens = new CommonTokenStream(lexer);
             parser.setInputStream(tokens);
-            parser.stat();
+            parser.prog();
             expr = br.readLine();
             line++;
         }

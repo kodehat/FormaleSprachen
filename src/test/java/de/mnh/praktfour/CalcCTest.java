@@ -26,6 +26,15 @@ public class CalcCTest {
                 { "5+2 n", 7 },
                 { "3+7 n", 10 },
                 { "3-7*2 n", -11 },
+                { "3==2+2-1 n", 1},
+                { "5==12*45/3 n", 0},
+                { "5>4-2 n", 1},
+                { "10>22*2 n", 0},
+                { "10<100/2 n", 1},
+                { "10<2^2 n", 0},
+                { "a=2+5 n a+6 n", 13},
+                { "2==2 ? 5+5 : 4+4 n", 10},
+                { "3>2*5 ? 5+5 : 4+4 n", 8},
         });
     }
 
@@ -41,7 +50,7 @@ public class CalcCTest {
         CalcCLexer lexer = new CalcCLexer(input);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         CalcCParser parser = new CalcCParser(tokens);
-        ParseTree tree = parser.stat();
+        ParseTree tree = parser.prog();
         ParseTreeWalker walker = new ParseTreeWalker();
         CalcCListenerWithProps calcProp = new CalcCListenerWithProps();
         walker.walk(calcProp, tree);
