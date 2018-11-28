@@ -19,14 +19,14 @@ expr: <assoc=right> expr op='^' expr       # Pot
     | '(' expr ')'                         # Parens
     ;
 
-POT   : '^' ;
-MUL   : '*' ;
-DIV   : '/' ;
-ADD   : '+' ;
-SUB   : '-' ;
-EQ    : '==' ;
-LT    : '<' ;
-GT    : '>' ;
-ID    : [a-zA-Z]+ ;
-INT   : [0-9]+ ;
-WS    : [ \t\r\n]+ -> skip ;
+POT : '^' ;
+MUL : '*' ;
+DIV : '/' ;
+ADD : '+' ;
+SUB : '-' ;
+EQ  : '==' ;
+LT  : '<' ;
+GT  : '>' ;
+ID  : [a-zA-Z]+ ;
+INT : [0-9]+ ;
+WS  : [ \t\r\n]+ -> skip ;
