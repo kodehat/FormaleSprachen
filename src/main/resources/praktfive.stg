@@ -1,0 +1,10 @@
+dot(nodes, edges) ::= <<
+digraph G {
+  ranksep=.25;
+  edge [arrowsize=.5]
+  node [shape=circle, fontname="Arial",
+        fontsize=12, fixedsize=true, height=.45]
+  <nodes :{node | <node>; }>
+  <edges.keys:{src | <edges.(src) :{trg | <src> -> <trg>; }; separator="\n">}; separator="\n">
+}
+>>

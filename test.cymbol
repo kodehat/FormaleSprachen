@@ -1,0 +1,15 @@
+int main() {
+	fact(5);
+	ggT(3,6);
+}
+
+int fact(int n){
+   if (n<=1) return 1;
+   else      return n*fact(n-1);
+}
+
+int ggT(int m, int n){
+   if (m==n) return m;
+   else if (m > n) return ggT(m-n,n);
+   else return ggT(m,n-m);
+}
