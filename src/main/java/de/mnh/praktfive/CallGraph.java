@@ -36,7 +36,11 @@ public class CallGraph {
             // Nodes
             for (String node : nodes) {
                 if (nodeColors.containsKey(node)) {
-                    node += " " + nodeColors.get(node).get(0);
+                    if (nodeColors.get(node).stream().allMatch(c -> c.contains("green"))) {
+                        node += " [color = green]";
+                    } else {
+                        node += " [color = red]";
+                    }
                 }
                 strNodes.add(node);
             }
@@ -81,15 +85,22 @@ public class CallGraph {
         }
 
         @Override
-        public void exitCall(CymbolParser.CallContext ctx) {
-            String funcName = ctx.ID().getText();
-            graph.edge(currentFunctionName, funcName);
+        public void exitFunctionDecl(CymbolParser.FunctionDeclContext ctx) {
+            currentFunctionName = null;
+        }
 
-            if (currentFunctionName.equals(funcName)) {
-                if (ctx.getParent() instanceof CymbolParser.ReturnContext) {
-                    graph.putColor(currentFunctionName, "green");
-                } else {
-                    graph.putColor(currentFunctionName, "red");
+        @Override
+        public void exitCall(CymbolParser.CallContext ctx) {
+            if (currentFunctionName != null) {
+                String funcName = ctx.ID().getText();
+                graph.edge(currentFunctionName, funcName);
+
+                if (currentFunctionName.equals(funcName)) {
+                    if (ctx.getParent() instanceof CymbolParser.ReturnContext) {
+                        graph.putColor(currentFunctionName, "green");
+                    } else {
+                        graph.putColor(currentFunctionName, "red");
+                    }
                 }
             }
         }

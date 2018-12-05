@@ -6,7 +6,7 @@ file: (functionDecl | varDecl)+
 varDecl: type ID ('=' expr)? ';'
        ;
 
-type: 'float' | 'int' | 'void'
+type: 'float' | 'int' | 'void' | 'boolean'
     ;
 
 functionDecl: type ID '(' formalParameters? ')' block
@@ -25,7 +25,7 @@ block: '{' stat* '}'
 /** stat : statement */
 stat: block                                                      #BlockStat
     | varDecl                                                    #VarDeclStat
-    | 'if' expr stat ('else' stat)?                              #IfElse
+    | 'if' '(' expr ')' stat ('else' stat)?                      #IfElse
     | 'return' expr? ';'                                         #Return
     | expr '=' expr  ';'                                         #Assign
     | expr ';'                                                   #CallStat
