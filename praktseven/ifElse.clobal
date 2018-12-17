@@ -1,0 +1,15 @@
+int n;
+int i;
+int main() {
+  n = 1;
+  i = 4;
+  if (n<i)
+    {n=1;}
+  else 
+    {i=4;}
+  if (n<i)
+    printf(n);
+  else 
+    printf(i);
+  return 0;
+}

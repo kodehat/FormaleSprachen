@@ -1,0 +1,93 @@
+program(globals,stats,functions) ::=<<
+.globals <globals>
+<stats; separator="\n">
+<functions; separator="\n">
+>>
+
+function(name, args, stats) ::=<<
+.def <name>: args=<args>, locals=0
+    <stats; separator="\n">
+>>
+
+assign(expr,index) ::=<<
+iconst <expr>
+gstore <index>
+>>
+
+if(cond, s1, s2) ::=<<
+<cond>
+brf s2
+<s1>
+br cont
+s2:
+<s2>
+cont:
+>>
+
+return(expr) ::=<<
+    load <expr>
+    ret
+>>
+
+print(expr) ::=<<
+load <expr>
+print
+>>
+
+uminus(expr) ::=<<
+-<expr>
+>>
+
+negation(expr) ::=<<
+!<expr>
+>>
+
+add(a, b) ::=<<
+<a>
+<b>
+iadd
+>>
+
+sub(a, b) ::=<<
+<a>
+<b>
+isub
+>>
+
+mult(a, b) ::=<<
+<a>
+<b>
+imul
+>>
+
+div(a, b) ::=<<
+<a>
+<b>
+idiv
+>>
+
+gt(a, b) ::=<<
+<a>
+<b>
+igt
+>>
+
+lt(a, b) ::=<<
+<a>add
+<b>
+ilt
+>>
+
+eq(a, b) ::=<<
+<a>
+<b>
+ieq
+>>
+
+neq(a, b) ::=<<
+<a>
+<b>
+ineq
+>>
+
+int(int) ::= "<int>"
