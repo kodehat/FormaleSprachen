@@ -6,10 +6,7 @@ import org.stringtemplate.v4.ST;
 import org.stringtemplate.v4.STGroup;
 import org.stringtemplate.v4.STGroupFile;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ClobalTranslatorListener extends ClobalBaseListener {
@@ -27,9 +24,10 @@ public class ClobalTranslatorListener extends ClobalBaseListener {
     private STGroup stGroup;
     private ST template;
 
-    private List<ST> functions = new LinkedList<>();
-    private List<ST> stats = new LinkedList<>();
+    private Map<String, List<ST>> functions = new HashMap<>();
+    private List<ST> functionSt = new LinkedList<>();
 
+    private List<ST> globalStats = new LinkedList<>();
     private int globalVarDecls = 0;
     private int globalNextIndex = 0;
 
@@ -57,8 +55,8 @@ public class ClobalTranslatorListener extends ClobalBaseListener {
 
     public ST getTemplate() {
         template.add("globals", globalVarDecls);
-        if (stats != null) template.add("stats", stats);
-        template.add("functions", functions);
+        template.add("stats", globalStats);
+        template.add("functions", functionSt);
         return template;
     }
 
@@ -69,36 +67,50 @@ public class ClobalTranslatorListener extends ClobalBaseListener {
 
     @Override
     public void exitFunctionDecl(ClobalParser.FunctionDeclContext ctx) {
-        functions.add(t("function")
+        if (currentFunction.equals("main")) functions.get(currentFunction).add(t("extramain"));
+        functionSt.add(t("function")
                 .add("name", currentFunction)
                 .add("args", 0)
-                .add("stats", getValue(ctx.block())));
-
+                .add("stats", functions.get(currentFunction)));
         currentFunction = null;
     }
 
     @Override
     public void exitBlock(ClobalParser.BlockContext ctx) {
-        List<ST> stList = ctx.stat().stream().map(s -> getValue(s.expr())).collect(Collectors.toList());
-        if (currentFunction != null) {
-            stats = stList;
+        List<ST> stList = buildStatsFromContext(ctx.stat());
+        if (currentFunction == null) {
+            globalStats.addAll(stList);
+        } else {
+            functions.put(currentFunction, stList);
         }
-        System.out.println(stList);
     }
 
     @Override
     public void exitVarDeclaration(ClobalParser.VarDeclarationContext ctx) {
+        globalStats.add(t("vardecl")
+            .add("type", ctx.type().getText())
+            .add("id", ctx.ID().getText()));
+
         globalVarDecls++;
     }
 
     @Override
     public void exitPreMinus(ClobalParser.PreMinusContext ctx) {
-        setValue(ctx, t("uminus").add("expr", getValue(ctx.expr())));
+        if (ctx.expr() instanceof ClobalParser.IdContext) {
+            setValue(ctx, t("uminus")
+                    .add("expr", getValue(ctx.expr()))
+                    .add("index", globalNextIndex++));
+            globalVarDecls++;
+        } else if (ctx.expr() instanceof ClobalParser.IntContext) {
+            setValue(ctx, t("int")
+                    .add("int", -1 * Integer.parseInt(ctx.expr().getText())));
+        }
     }
 
     @Override
     public void exitNegate(ClobalParser.NegateContext ctx) {
-        setValue(ctx, t("negation").add("expr", getValue(ctx.expr())));
+        setValue(ctx, t("negation")
+                .add("expr", getValue(ctx.expr())));
     }
 
     @Override
@@ -108,26 +120,32 @@ public class ClobalTranslatorListener extends ClobalBaseListener {
                 setValue(ctx, t("add")
                         .add("a", getValue(ctx.expr(0)))
                         .add("b", getValue(ctx.expr(1))));
+                break;
             case ClobalParser.SUB:
                 setValue(ctx, t("sub")
                         .add("a", getValue(ctx.expr(0)))
                         .add("b", getValue(ctx.expr(1))));
+                break;
             case ClobalParser.MUL:
                 setValue(ctx, t("mult")
                         .add("a", getValue(ctx.expr(0)))
                         .add("b", getValue(ctx.expr(1))));
+                break;
             case ClobalParser.DIV:
                 setValue(ctx, t("div")
                         .add("a", getValue(ctx.expr(0)))
                         .add("b", getValue(ctx.expr(1))));
+                break;
             case ClobalParser.EQ:
                 setValue(ctx, t("eq")
                         .add("a", getValue(ctx.expr(0)))
                         .add("b", getValue(ctx.expr(1))));
+                break;
             case ClobalParser.NEQ:
                 setValue(ctx, t("neq")
                         .add("a", getValue(ctx.expr(0)))
                         .add("b", getValue(ctx.expr(1))));
+                break;
             case ClobalParser.GT:
                 setValue(ctx, t("gt")
                         .add("a", getValue(ctx.expr(0)))
@@ -136,7 +154,14 @@ public class ClobalTranslatorListener extends ClobalBaseListener {
                 setValue(ctx, t("lt")
                         .add("a", getValue(ctx.expr(0)))
                         .add("b", getValue(ctx.expr(1))));
+                break;
         }
+    }
+
+    @Override
+    public void exitId(ClobalParser.IdContext ctx) {
+        setValue(ctx, t("id")
+            .add("id", stack.get(ctx.ID().getText()).index));
     }
 
     @Override
@@ -147,7 +172,7 @@ public class ClobalTranslatorListener extends ClobalBaseListener {
 
     @Override
     public void exitAssign(ClobalParser.AssignContext ctx) {
-        int index = globalNextIndex++;
+        int index = stack.containsKey(ctx.ID().getText()) ? stack.get(ctx.ID().getText()).index : globalNextIndex++;
         stack.put(ctx.ID().getText(), new Tuple<>(index, Integer.valueOf(ctx.expr().getText())));
         setValue(ctx, t("assign")
                 .add("expr", getValue(ctx.expr()))
@@ -158,5 +183,39 @@ public class ClobalTranslatorListener extends ClobalBaseListener {
     public void exitPrint(ClobalParser.PrintContext ctx) {
         setValue(ctx, t("print")
                 .add("expr", getValue(ctx.expr())));
+    }
+
+    @Override
+    public void exitIfElse(ClobalParser.IfElseContext ctx) {
+        setValue(ctx, t("if")
+            .add("cond", getValue(ctx.expr()))
+            .add("s1", buildStatsFromContext(ctx.stat(0)))
+            .add("s2", buildStatsFromContext(ctx.stat(1))));
+    }
+
+    private List<ST> buildStatsFromContext(ClobalParser.StatContext ctx) {
+        List<ST> stList = new LinkedList<>();
+        stList.add(getValue(ctx.block()));
+        stList.add(getValue(ctx.ifStat()));
+        stList.add(getValue(ctx.forStat()));
+        stList.add(getValue(ctx.returnStat()));
+        stList.add(getValue(ctx.assignStat()));
+        stList.add(getValue(ctx.printStat()));
+        stList.add(getValue(ctx.expr()));
+        stList = stList.stream().filter(Objects::nonNull).collect(Collectors.toList());
+        return stList;
+    }
+
+    private List<ST> buildStatsFromContext(List<ClobalParser.StatContext> ctx) {
+        List<ST> stList = new LinkedList<>();
+        stList.addAll(ctx.stream().map(s -> getValue(s.block())).collect(Collectors.toList()));
+        stList.addAll(ctx.stream().map(s -> getValue(s.ifStat())).collect(Collectors.toList()));
+        stList.addAll(ctx.stream().map(s -> getValue(s.forStat())).collect(Collectors.toList()));
+        stList.addAll(ctx.stream().map(s -> getValue(s.returnStat())).collect(Collectors.toList()));
+        stList.addAll(ctx.stream().map(s -> getValue(s.assignStat())).collect(Collectors.toList()));
+        stList.addAll(ctx.stream().map(s -> getValue(s.printStat())).collect(Collectors.toList()));
+        stList.addAll(ctx.stream().map(s -> getValue(s.expr())).collect(Collectors.toList()));
+        stList = stList.stream().filter(Objects::nonNull).collect(Collectors.toList());
+        return stList;
     }
 }

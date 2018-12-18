@@ -9,8 +9,13 @@ function(name, args, stats) ::=<<
     <stats; separator="\n">
 >>
 
+extramain() ::= "halt"
+
+vardecl(type,id) ::=<<
+>>
+
 assign(expr,index) ::=<<
-iconst <expr>
+<expr>
 gstore <index>
 >>
 
@@ -30,12 +35,16 @@ return(expr) ::=<<
 >>
 
 print(expr) ::=<<
-load <expr>
+<expr>
 print
 >>
 
-uminus(expr) ::=<<
--<expr>
+uminus(expr,index) ::=<<
+iconst -1
+gstore <index>
+gload <index>
+<expr>
+imul
 >>
 
 negation(expr) ::=<<
@@ -73,7 +82,7 @@ igt
 >>
 
 lt(a, b) ::=<<
-<a>add
+<a>
 <b>
 ilt
 >>
@@ -90,4 +99,6 @@ neq(a, b) ::=<<
 ineq
 >>
 
-int(int) ::= "<int>"
+id(id) ::= "gload <id>"
+
+int(int) ::= "iconst <int>"

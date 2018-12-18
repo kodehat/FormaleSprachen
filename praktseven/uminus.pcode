@@ -1,0 +1,15 @@
+.globals 3
+.def main: args=0, locals=0
+    iconst -3
+    gstore 0
+    iconst 6
+    gstore 1
+    iconst -1
+    gstore 2
+    gload 2
+    gload 0
+    imul
+    gload 1
+    isub
+    print
+    halt

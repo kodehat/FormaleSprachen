@@ -1,3 +1,5 @@
+package de.mnh.praktseven.interpreter;
+
 /***
  * Excerpted from "Language Implementation Patterns",
  * published by The Pragmatic Bookshelf.

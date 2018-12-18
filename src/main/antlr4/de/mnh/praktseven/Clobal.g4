@@ -63,7 +63,6 @@ fragment LETTER
     : [a-zA-Z]
     ;
 
-POT : '^' ;
 MUL : '*' ;
 DIV : '/' ;
 ADD : '+' ;
