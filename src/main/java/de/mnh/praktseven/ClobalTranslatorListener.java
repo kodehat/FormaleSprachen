@@ -34,6 +34,7 @@ public class ClobalTranslatorListener extends ClobalBaseListener {
     private String currentFunction;
 
     private ParseTreeProperty<ST> templates = new ParseTreeProperty<>();
+    private ParseTreeProperty<List<ST>> templateList = new ParseTreeProperty<>();
     private Map<String, Tuple<Integer, Integer>> stack = new HashMap<>();
 
     public ClobalTranslatorListener(STGroupFile file) {
@@ -63,6 +64,7 @@ public class ClobalTranslatorListener extends ClobalBaseListener {
     @Override
     public void enterFunctionDecl(ClobalParser.FunctionDeclContext ctx) {
         currentFunction = ctx.ID().getText();
+        functions.put(currentFunction, new LinkedList<>());
     }
 
     @Override
@@ -73,16 +75,28 @@ public class ClobalTranslatorListener extends ClobalBaseListener {
                 .add("args", 0)
                 .add("stats", functions.get(currentFunction)));
         currentFunction = null;
+        System.out.println("FUNC DECL BLOCK:");
+        templateList.get(ctx.block()).forEach(s -> System.out.println(s.render()));
     }
 
     @Override
     public void exitBlock(ClobalParser.BlockContext ctx) {
-        List<ST> stList = buildStatsFromContext(ctx.stat());
-        if (currentFunction == null) {
-            globalStats.addAll(stList);
-        } else {
-            functions.put(currentFunction, stList);
-        }
+//        List<ST> stList = buildStatsFromContext(ctx.stat());
+//        if (currentFunction == null) {
+//            globalStats.addAll(stList);
+//        } else {
+//            functions.put(currentFunction, stList);
+//        }
+        System.out.println("BLOCK:");
+        ctx.stat().forEach(s -> System.out.println(s.getClass().getSimpleName()));
+        List<ST> t = new LinkedList<>();
+        ctx.stat().forEach(s -> t.add(getValue(s)));
+        templateList.put(ctx, t);
+    }
+
+    @Override
+    public void exitBlockSt(ClobalParser.BlockStContext ctx) {
+        functions.get(currentFunction).add(getValue(ctx.block()));
     }
 
     @Override
@@ -177,6 +191,19 @@ public class ClobalTranslatorListener extends ClobalBaseListener {
         setValue(ctx, t("assign")
                 .add("expr", getValue(ctx.expr()))
                 .add("index", index));
+        if (currentFunction != null) {
+            //functions.get(currentFunction).add(getValue(ctx));
+        }
+    }
+
+    @Override
+    public void exitAssignSt(ClobalParser.AssignStContext ctx) {
+        setValue(ctx, getValue(ctx.assignStat()));
+    }
+
+    @Override
+    public void exitExprSt(ClobalParser.ExprStContext ctx) {
+        setValue(ctx, getValue(ctx.expr()));
     }
 
     @Override
@@ -186,14 +213,30 @@ public class ClobalTranslatorListener extends ClobalBaseListener {
     }
 
     @Override
-    public void exitIfElse(ClobalParser.IfElseContext ctx) {
-        setValue(ctx, t("if")
-            .add("cond", getValue(ctx.expr()))
-            .add("s1", buildStatsFromContext(ctx.stat(0)))
-            .add("s2", buildStatsFromContext(ctx.stat(1))));
+    public void exitPrintSt(ClobalParser.PrintStContext ctx) {
+        setValue(ctx, getValue(ctx.printStat()));
     }
 
-    private List<ST> buildStatsFromContext(ClobalParser.StatContext ctx) {
+    @Override
+    public void exitIfElse(ClobalParser.IfElseContext ctx) {
+//        setValue(ctx, t("if")
+//            .add("cond", getValue(ctx.expr()))
+//            .add("s1", buildStatsFromContext(ctx.stat(0)))
+//            .add("s2", buildStatsFromContext(ctx.stat(1))));
+        setValue(ctx, t("if")
+                .add("cond", getValue(ctx.expr()))
+                .add("s1", getValue(ctx.stat(0)))
+                .add("s2", getValue(ctx.stat(1))));
+    }
+
+    @Override
+    public void exitIfSt(ClobalParser.IfStContext ctx) {
+        if (currentFunction != null) {
+            functions.get(currentFunction).add(getValue(ctx.ifStat()));
+        }
+    }
+
+/*    private List<ST> buildStatsFromContext(ClobalParser.StatContext ctx) {
         List<ST> stList = new LinkedList<>();
         stList.add(getValue(ctx.block()));
         stList.add(getValue(ctx.ifStat()));
@@ -208,14 +251,14 @@ public class ClobalTranslatorListener extends ClobalBaseListener {
 
     private List<ST> buildStatsFromContext(List<ClobalParser.StatContext> ctx) {
         List<ST> stList = new LinkedList<>();
+        stList.addAll(ctx.stream().map(s -> getValue(s.assignStat())).collect(Collectors.toList()));
         stList.addAll(ctx.stream().map(s -> getValue(s.block())).collect(Collectors.toList()));
         stList.addAll(ctx.stream().map(s -> getValue(s.ifStat())).collect(Collectors.toList()));
         stList.addAll(ctx.stream().map(s -> getValue(s.forStat())).collect(Collectors.toList()));
         stList.addAll(ctx.stream().map(s -> getValue(s.returnStat())).collect(Collectors.toList()));
-        stList.addAll(ctx.stream().map(s -> getValue(s.assignStat())).collect(Collectors.toList()));
         stList.addAll(ctx.stream().map(s -> getValue(s.printStat())).collect(Collectors.toList()));
         stList.addAll(ctx.stream().map(s -> getValue(s.expr())).collect(Collectors.toList()));
         stList = stList.stream().filter(Objects::nonNull).collect(Collectors.toList());
         return stList;
-    }
+    }*/
 }

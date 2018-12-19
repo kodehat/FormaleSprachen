@@ -11,13 +11,13 @@ block
     : '{' stat* '}'
     ;
 
-stat: block
-    | ifStat
-    | forStat
-    | returnStat ';'
-    | assignStat ';'
-    | printStat ';'
-    | expr ';'
+stat: block                                                     #BlockSt
+    | ifStat                                                    #IfSt
+    | forStat                                                   #ForSt
+    | returnStat ';'                                            #ReturnSt
+    | assignStat ';'                                            #AssignSt
+    | printStat ';'                                             #PrintSt
+    | expr ';'                                                  #ExprSt
     ;
      
 assignStat
