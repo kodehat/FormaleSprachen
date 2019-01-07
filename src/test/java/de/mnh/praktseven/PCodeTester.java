@@ -82,7 +82,7 @@ public class PCodeTester {
         Interpreter.load(interpreter, new ByteArrayInputStream(listener.getGeneratedCode().getBytes()));
         interpreter.exec();
 
-        // Restore System.in
+        // Restore System.out
         restoreSystemOutStream();
 
         // Print the file path and the result to console
