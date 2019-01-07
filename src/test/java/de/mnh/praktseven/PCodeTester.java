@@ -14,11 +14,11 @@ public class PCodeTester {
         });
 
         Interpreter.main(new String[]{
-                "./praktseven/printf.pcode"
+               "-trace", "./praktseven/printf.pcode"
         });
 
         Interpreter.main(new String[]{
-                "-trace", "./praktseven/uminus.pcode"
+                "./praktseven/uminus.pcode"
         });
     }
 

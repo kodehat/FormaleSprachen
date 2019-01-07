@@ -69,14 +69,21 @@ public class ClobalTranslatorListener extends ClobalBaseListener {
 
     @Override
     public void exitFunctionDecl(ClobalParser.FunctionDeclContext ctx) {
-        if (currentFunction.equals("main")) functions.get(currentFunction).add(t("extramain"));
+        //if (currentFunction.equals("main")) functions.get(currentFunction).add(t("extramain"));
+        if (currentFunction.equals("main")) {
+            templateList.get(ctx.block()).add(t("extramain"));
+        }
+//        functionSt.add(t("function")
+//                .add("name", currentFunction)
+//                .add("args", 0)
+//                .add("stats", functions.get(currentFunction)));
         functionSt.add(t("function")
                 .add("name", currentFunction)
                 .add("args", 0)
-                .add("stats", functions.get(currentFunction)));
+                .add("stats", templateList.get(ctx.block())));
         currentFunction = null;
         System.out.println("FUNC DECL BLOCK:");
-        templateList.get(ctx.block()).forEach(s -> System.out.println(s.render()));
+        //templateList.get(ctx.block()).forEach(s -> System.out.println(s.render()));
     }
 
     @Override
@@ -192,7 +199,7 @@ public class ClobalTranslatorListener extends ClobalBaseListener {
                 .add("expr", getValue(ctx.expr()))
                 .add("index", index));
         if (currentFunction != null) {
-            //functions.get(currentFunction).add(getValue(ctx));
+            functions.get(currentFunction).add(getValue(ctx));
         }
     }
 
@@ -210,11 +217,26 @@ public class ClobalTranslatorListener extends ClobalBaseListener {
     public void exitPrint(ClobalParser.PrintContext ctx) {
         setValue(ctx, t("print")
                 .add("expr", getValue(ctx.expr())));
+        System.out.println("PRINT EXPR:");
+        System.out.println(ctx.expr().getClass().getSimpleName());
     }
 
     @Override
     public void exitPrintSt(ClobalParser.PrintStContext ctx) {
         setValue(ctx, getValue(ctx.printStat()));
+    }
+
+    @Override
+    public void exitReturn(ClobalParser.ReturnContext ctx) {
+        if (currentFunction != null && !currentFunction.equals("main")) {
+            setValue(ctx, t("return")
+                    .add("expr", getValue(ctx.expr())));
+        }
+    }
+
+    @Override
+    public void exitReturnSt(ClobalParser.ReturnStContext ctx) {
+        setValue(ctx, getValue(ctx.returnStat()));
     }
 
     @Override
@@ -232,7 +254,10 @@ public class ClobalTranslatorListener extends ClobalBaseListener {
     @Override
     public void exitIfSt(ClobalParser.IfStContext ctx) {
         if (currentFunction != null) {
-            functions.get(currentFunction).add(getValue(ctx.ifStat()));
+            //functions.get(currentFunction).add(getValue(ctx.ifStat()));
+            List<ST> t = new LinkedList<>();
+            t.add(getValue(ctx.ifStat()));
+            templateList.put(ctx, t);
         }
     }
 
