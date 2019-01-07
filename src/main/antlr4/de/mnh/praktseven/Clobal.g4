@@ -11,44 +11,44 @@ block
     : '{' stat* '}'
     ;
 
-stat: block                                                     #BlockSt
-    | ifStat                                                    #IfSt
-    | forStat                                                   #ForSt
-    | returnStat ';'                                            #ReturnSt
-    | assignStat ';'                                            #AssignSt
-    | printStat ';'                                             #PrintSt
-    | expr ';'                                                  #ExprSt
+stat: block
+    | ifStat
+    | forStat
+    | returnStat ';'
+    | assignStat ';'
+    | printStat ';'
+    | expr ';'
     ;
      
 assignStat
-    : ID '=' expr                                               #Assign
+    : ID '=' expr
     ;
 
 ifStat
-    : 'if' '('expr ')' stat ('else' stat)?                      #IfElse
+    : 'if' '('expr ')' stat ('else' stat)?
     ;
 
 forStat
-    : 'for' '(' assignStat ';' expr ';' assignStat ')' block    #For
+    : 'for' '(' assignStat ';' expr ';' assignStat ')' block
     ;
 
 returnStat
-    : 'return' expr                                             #Return
+    : 'return' expr
     ;
 
 printStat
-    : 'printf' '(' expr ')'                                     #Print
+    : 'printf' '(' expr ')'
     ;
 
 varDecl
-    : type ID ';'                                               #VarDeclaration
+    : type ID ';'
     ;
 
 type: 'int'
     ;
 
-expr: '-' expr                          #PreMinus
-    | '!' expr                          #Negate
+expr: '-' expr                          #Uminus
+    | '!' expr                          #Not
     | expr op=('*'|'/') expr            #BinOp
     | expr op=('+'|'-') expr            #BinOp
     | expr op=('=='|'!='|'<'|'>') expr  #BinOp
