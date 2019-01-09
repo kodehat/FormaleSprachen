@@ -10,128 +10,131 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class ClobalTranslatorListener extends ClobalBaseListener {
-    public class Tuple<K, V> {
-
-        public K index;
-        public V value;
-
-        public Tuple(K first, V second) {
-            this.index = first;
-            this.value = second;
-        }
-    }
 
     private STGroup stGroup;
-    private ST template;
-
-    private Map<String, List<ST>> functions = new HashMap<>();
-    private List<ST> functionSt = new LinkedList<>();
-
-    private List<ST> globalStats = new LinkedList<>();
-    private int globalVarDecls = 0;
-    private int globalNextIndex = 0;
 
     private String currentFunction;
 
+    private int i = 0;
+
+    private List<ST> functionTemplates = new LinkedList<>();
+
+    private Map<String, Integer> variables = new HashMap<>();
+
     private ParseTreeProperty<ST> templates = new ParseTreeProperty<>();
-    private ParseTreeProperty<List<ST>> templateList = new ParseTreeProperty<>();
-    private Map<String, Tuple<Integer, Integer>> stack = new HashMap<>();
 
     public ClobalTranslatorListener(STGroupFile file) {
         this.stGroup = file;
-        this.template = t("program");
     }
 
-    public void setValue(ParseTree node, ST value) {
+    private void setValue(ParseTree node, ST value) {
         templates.put(node, value);
     }
 
-    public ST getValue(ParseTree node) {
+    private ST getValue(ParseTree node) {
         return templates.get(node);
     }
 
-    public ST t(String instanceName) {
+    /**
+     * Add a new variable to the variable map
+     * with the next possible index.
+     *
+     * @param name name of the variable
+     */
+    private void addVariable(String name) {
+        if (!variables.containsKey(name)) {
+            variables.put(name, variables.size());
+        } else {
+            throw new RuntimeException(String.format("Variable %s already declared!", name));
+        }
+    }
+
+    /**
+     * Returns the index of a declared variable.
+     * Throws a {@link RuntimeException}, if
+     * variable not declared.
+     *
+     * @param name name of the variable
+     * @return index of the variable
+     */
+    private int getVariableIndex(String name) {
+        if (variables.containsKey(name)) {
+            return variables.get(name);
+        } else {
+            throw new RuntimeException(String.format("Variable %s not declared!", name));
+        }
+    }
+
+    private ST t(String instanceName) {
         return stGroup.getInstanceOf(instanceName);
     }
 
-    public ST getTemplate() {
-        template.add("globals", globalVarDecls);
-        template.add("stats", globalStats);
-        template.add("functions", functionSt);
-        return template;
+    public String getGeneratedCode() {
+        return t("program")
+            .add("globalsCount", variables.size())
+            .add("functions", functionTemplates)
+            .render();
     }
 
     @Override
     public void enterFunctionDecl(ClobalParser.FunctionDeclContext ctx) {
         currentFunction = ctx.ID().getText();
-        functions.put(currentFunction, new LinkedList<>());
     }
 
     @Override
     public void exitFunctionDecl(ClobalParser.FunctionDeclContext ctx) {
-        //if (currentFunction.equals("main")) functions.get(currentFunction).add(t("extramain"));
-        if (currentFunction.equals("main")) {
-            templateList.get(ctx.block()).add(t("extramain"));
-        }
-//        functionSt.add(t("function")
-//                .add("name", currentFunction)
-//                .add("args", 0)
-//                .add("stats", functions.get(currentFunction)));
-        functionSt.add(t("function")
-                .add("name", currentFunction)
-                .add("args", 0)
-                .add("stats", templateList.get(ctx.block())));
+        functionTemplates.add(t("functionDecl")
+            .add("name", ctx.ID())
+            .add("block", getValue(ctx.block()))
+        );
         currentFunction = null;
-        System.out.println("FUNC DECL BLOCK:");
-        //templateList.get(ctx.block()).forEach(s -> System.out.println(s.render()));
     }
 
     @Override
     public void exitBlock(ClobalParser.BlockContext ctx) {
-//        List<ST> stList = buildStatsFromContext(ctx.stat());
-//        if (currentFunction == null) {
-//            globalStats.addAll(stList);
-//        } else {
-//            functions.put(currentFunction, stList);
-//        }
-        System.out.println("BLOCK:");
-        ctx.stat().forEach(s -> System.out.println(s.getClass().getSimpleName()));
-        List<ST> t = new LinkedList<>();
-        ctx.stat().forEach(s -> t.add(getValue(s)));
-        templateList.put(ctx, t);
+        setValue(ctx, t("block")
+            .add("stats", ctx.stat().stream().map(s -> getValue(s)).collect(Collectors.toList()))
+        );
     }
 
     @Override
-    public void exitBlockSt(ClobalParser.BlockStContext ctx) {
-        functions.get(currentFunction).add(getValue(ctx.block()));
-    }
-
-    @Override
-    public void exitVarDeclaration(ClobalParser.VarDeclarationContext ctx) {
-        globalStats.add(t("vardecl")
-            .add("type", ctx.type().getText())
-            .add("id", ctx.ID().getText()));
-
-        globalVarDecls++;
-    }
-
-    @Override
-    public void exitPreMinus(ClobalParser.PreMinusContext ctx) {
-        if (ctx.expr() instanceof ClobalParser.IdContext) {
-            setValue(ctx, t("uminus")
-                    .add("expr", getValue(ctx.expr()))
-                    .add("index", globalNextIndex++));
-            globalVarDecls++;
-        } else if (ctx.expr() instanceof ClobalParser.IntContext) {
-            setValue(ctx, t("int")
-                    .add("int", -1 * Integer.parseInt(ctx.expr().getText())));
+    public void exitStat(ClobalParser.StatContext ctx) {
+        if (ctx.expr() != null) {
+            setValue(ctx, getValue(ctx.expr()));
+        } else if (ctx.printStat() != null) {
+            setValue(ctx, getValue(ctx.printStat()));
+        } else if (ctx.assignStat() != null) {
+            setValue(ctx, getValue(ctx.assignStat()));
+        } else if (ctx.returnStat() != null) {
+            setValue(ctx, getValue(ctx.returnStat()));
+        } else if (ctx.forStat() != null) {
+            setValue(ctx, getValue(ctx.forStat()));
+        } else if (ctx.ifStat() != null) {
+            setValue(ctx, getValue(ctx.ifStat()));
+        } else if (ctx.block() != null) {
+            setValue(ctx, getValue(ctx.block()));
         }
     }
 
     @Override
-    public void exitNegate(ClobalParser.NegateContext ctx) {
-        setValue(ctx, t("negation")
-                .add("expr", getValue(ctx.expr())));
+    public void exitVarDecl(ClobalParser.VarDeclContext ctx) {
+        addVariable(ctx.ID().getText());
+    }
+
+    @Override
+    public void exitUminus(ClobalParser.UminusContext ctx) {
+        // Add a new temporary global variable
+        setValue(ctx, t("uminus")
+            .add("value", getValue(ctx.expr()))
+        );
+    }
+
+    @Override
+    public void exitNot(ClobalParser.NotContext ctx) {
+        setValue(ctx, t("not")
+            .add("value", getValue(ctx.expr()))
+            .add("i", (i++) + "")
+        );
     }
 
     @Override
@@ -140,150 +143,134 @@ public class ClobalTranslatorListener extends ClobalBaseListener {
             case ClobalParser.ADD:
                 setValue(ctx, t("add")
                         .add("a", getValue(ctx.expr(0)))
-                        .add("b", getValue(ctx.expr(1))));
+                        .add("b", getValue(ctx.expr(1)))
+                );
                 break;
             case ClobalParser.SUB:
                 setValue(ctx, t("sub")
                         .add("a", getValue(ctx.expr(0)))
-                        .add("b", getValue(ctx.expr(1))));
+                        .add("b", getValue(ctx.expr(1)))
+                );
                 break;
             case ClobalParser.MUL:
                 setValue(ctx, t("mult")
                         .add("a", getValue(ctx.expr(0)))
-                        .add("b", getValue(ctx.expr(1))));
+                        .add("b", getValue(ctx.expr(1)))
+                );
                 break;
             case ClobalParser.DIV:
                 setValue(ctx, t("div")
                         .add("a", getValue(ctx.expr(0)))
-                        .add("b", getValue(ctx.expr(1))));
+                        .add("b", getValue(ctx.expr(1)))
+                );
                 break;
             case ClobalParser.EQ:
                 setValue(ctx, t("eq")
                         .add("a", getValue(ctx.expr(0)))
-                        .add("b", getValue(ctx.expr(1))));
+                        .add("b", getValue(ctx.expr(1)))
+                );
                 break;
             case ClobalParser.NEQ:
                 setValue(ctx, t("neq")
                         .add("a", getValue(ctx.expr(0)))
-                        .add("b", getValue(ctx.expr(1))));
+                        .add("b", getValue(ctx.expr(1)))
+                        .add("i", (i++) + "")
+                );
                 break;
             case ClobalParser.GT:
                 setValue(ctx, t("gt")
                         .add("a", getValue(ctx.expr(0)))
-                        .add("b", getValue(ctx.expr(1))));
+                        .add("b", getValue(ctx.expr(1)))
+                );
             case ClobalParser.LT:
                 setValue(ctx, t("lt")
                         .add("a", getValue(ctx.expr(0)))
-                        .add("b", getValue(ctx.expr(1))));
+                        .add("b", getValue(ctx.expr(1)))
+                );
                 break;
         }
+    }
+
+    @Override
+    public void exitCondExpr(ClobalParser.CondExprContext ctx) {
+        setValue(ctx, t("cond")
+            .add("cond", getValue(ctx.expr(0)))
+            .add("t", getValue(ctx.expr(1)))
+            .add("f", getValue(ctx.expr(2)))
+            .add("i", (i++) + "")
+        );
+    }
+
+    @Override
+    public void exitParens(ClobalParser.ParensContext ctx) {
+        setValue(ctx, getValue(ctx.expr()));
+    }
+
+    @Override
+    public void exitFuncCall(ClobalParser.FuncCallContext ctx) {
+        setValue(ctx, t("funcCall")
+            .add("name", ctx.ID().getText())
+        );
     }
 
     @Override
     public void exitId(ClobalParser.IdContext ctx) {
         setValue(ctx, t("id")
-            .add("id", stack.get(ctx.ID().getText()).index));
+            .add("index", getVariableIndex(ctx.ID().getText()))
+        );
     }
 
     @Override
     public void exitInt(ClobalParser.IntContext ctx) {
         setValue(ctx, t("int")
-                .add("int", ctx.INT().getText()));
+                .add("value", ctx.INT().getText())
+        );
     }
 
     @Override
-    public void exitAssign(ClobalParser.AssignContext ctx) {
-        int index = stack.containsKey(ctx.ID().getText()) ? stack.get(ctx.ID().getText()).index : globalNextIndex++;
-        stack.put(ctx.ID().getText(), new Tuple<>(index, Integer.valueOf(ctx.expr().getText())));
+    public void exitAssignStat(ClobalParser.AssignStatContext ctx) {
         setValue(ctx, t("assign")
-                .add("expr", getValue(ctx.expr()))
-                .add("index", index));
-        if (currentFunction != null) {
-            functions.get(currentFunction).add(getValue(ctx));
-        }
+            .add("index", getVariableIndex(ctx.ID().getText()))
+            .add("value", getValue(ctx.expr()))
+        );
     }
 
     @Override
-    public void exitAssignSt(ClobalParser.AssignStContext ctx) {
-        setValue(ctx, getValue(ctx.assignStat()));
-    }
-
-    @Override
-    public void exitExprSt(ClobalParser.ExprStContext ctx) {
-        setValue(ctx, getValue(ctx.expr()));
-    }
-
-    @Override
-    public void exitPrint(ClobalParser.PrintContext ctx) {
+    public void exitPrintStat(ClobalParser.PrintStatContext ctx) {
         setValue(ctx, t("print")
-                .add("expr", getValue(ctx.expr())));
-        System.out.println("PRINT EXPR:");
-        System.out.println(ctx.expr().getClass().getSimpleName());
+            .add("value", getValue(ctx.expr()))
+        );
     }
 
     @Override
-    public void exitPrintSt(ClobalParser.PrintStContext ctx) {
-        setValue(ctx, getValue(ctx.printStat()));
-    }
-
-    @Override
-    public void exitReturn(ClobalParser.ReturnContext ctx) {
-        if (currentFunction != null && !currentFunction.equals("main")) {
+    public void exitReturnStat(ClobalParser.ReturnStatContext ctx) {
+        if (currentFunction.equals("main")) {
+            setValue(ctx, t("halt"));
+        } else {
             setValue(ctx, t("return")
-                    .add("expr", getValue(ctx.expr())));
+                .add("value", getValue(ctx.expr()))
+            );
         }
     }
 
     @Override
-    public void exitReturnSt(ClobalParser.ReturnStContext ctx) {
-        setValue(ctx, getValue(ctx.returnStat()));
+    public void exitIfStat(ClobalParser.IfStatContext ctx) {
+        setValue(ctx, t("ifElse")
+            .add("cond", getValue(ctx.expr()))
+            .add("t", getValue(ctx.stat(0)))
+            .add("f", getValue(ctx.stat(1)))
+            .add("i", (i++) + "")
+        );
     }
 
     @Override
-    public void exitIfElse(ClobalParser.IfElseContext ctx) {
-//        setValue(ctx, t("if")
-//            .add("cond", getValue(ctx.expr()))
-//            .add("s1", buildStatsFromContext(ctx.stat(0)))
-//            .add("s2", buildStatsFromContext(ctx.stat(1))));
-        setValue(ctx, t("if")
-                .add("cond", getValue(ctx.expr()))
-                .add("s1", getValue(ctx.stat(0)))
-                .add("s2", getValue(ctx.stat(1))));
+    public void exitForStat(ClobalParser.ForStatContext ctx) {
+        setValue(ctx, t("for")
+            .add("assign", getValue(ctx.assignStat(0)))
+            .add("cond", getValue(ctx.expr()))
+            .add("step", getValue(ctx.assignStat(1)))
+            .add("block", getValue(ctx.block()))
+            .add("i", (i++) + "")
+        );
     }
-
-    @Override
-    public void exitIfSt(ClobalParser.IfStContext ctx) {
-        if (currentFunction != null) {
-            //functions.get(currentFunction).add(getValue(ctx.ifStat()));
-            List<ST> t = new LinkedList<>();
-            t.add(getValue(ctx.ifStat()));
-            templateList.put(ctx, t);
-        }
-    }
-
-/*    private List<ST> buildStatsFromContext(ClobalParser.StatContext ctx) {
-        List<ST> stList = new LinkedList<>();
-        stList.add(getValue(ctx.block()));
-        stList.add(getValue(ctx.ifStat()));
-        stList.add(getValue(ctx.forStat()));
-        stList.add(getValue(ctx.returnStat()));
-        stList.add(getValue(ctx.assignStat()));
-        stList.add(getValue(ctx.printStat()));
-        stList.add(getValue(ctx.expr()));
-        stList = stList.stream().filter(Objects::nonNull).collect(Collectors.toList());
-        return stList;
-    }
-
-    private List<ST> buildStatsFromContext(List<ClobalParser.StatContext> ctx) {
-        List<ST> stList = new LinkedList<>();
-        stList.addAll(ctx.stream().map(s -> getValue(s.assignStat())).collect(Collectors.toList()));
-        stList.addAll(ctx.stream().map(s -> getValue(s.block())).collect(Collectors.toList()));
-        stList.addAll(ctx.stream().map(s -> getValue(s.ifStat())).collect(Collectors.toList()));
-        stList.addAll(ctx.stream().map(s -> getValue(s.forStat())).collect(Collectors.toList()));
-        stList.addAll(ctx.stream().map(s -> getValue(s.returnStat())).collect(Collectors.toList()));
-        stList.addAll(ctx.stream().map(s -> getValue(s.printStat())).collect(Collectors.toList()));
-        stList.addAll(ctx.stream().map(s -> getValue(s.expr())).collect(Collectors.toList()));
-        stList = stList.stream().filter(Objects::nonNull).collect(Collectors.toList());
-        return stList;
-    }*/
 }

@@ -1,54 +1,72 @@
-program(globals,stats,functions) ::=<<
-.globals <globals>
-<stats; separator="\n">
+program(globalsCount,functions) ::=<<
+.globals <globalsCount>
 <functions; separator="\n">
 >>
 
-function(name, args, stats) ::=<<
-.def <name>: args=<args>, locals=0
+functionDecl(name, block) ::=<<
+.def <name>: args=0, locals=0
+    <block>
+>>
+
+block(stats) ::=<<
     <stats; separator="\n">
 >>
 
-extramain() ::= "halt"
+halt() ::= "halt"
 
-vardecl(type,id) ::=<<
->>
-
-assign(expr,index) ::=<<
-<expr>
+assign(index,value) ::=<<
+<value>
 gstore <index>
 >>
 
-if(cond, s1, s2) ::=<<
-<cond>
-brf s2
-<s1>
-br cont
-s2:
-<s2>
-cont:
+cond(cond,t,f,i) ::=<<
+<ifElse(cond,t,f,i)>
 >>
 
-return(expr) ::=<<
+funcCall(name) ::= "call <name>()"
+
+ifElse(cond,t,f,i) ::=<<
+<cond>
+brf s<i>
+<t>
+br cont<i>
+s<i>:
+<f>
+cont<i>:
+>>
+
+for(assign,cond,step,block,i) ::=<<
+<assign>
+begin<i>:
+<cond>
+brf end<i>
+<block>
+<step>
+br begin<i>
+end<i>:
+>>
+
+return(value) ::=<<
+<value>
 ret
 >>
 
-print(expr) ::=<<
-<expr>
+print(value) ::=<<
+<value>
 print
 >>
 
-uminus(expr,index) ::=<<
-iconst -1
-gstore <index>
-gload <index>
-<expr>
-imul
+uminus(value) ::=<<
+<mult(int("-1"), value)>
 >>
 
-negation(expr) ::=<<
-!<expr>
+not(value,i) ::=<<
+<ifElse(value,assertFalse(),assertTrue(),i)>
 >>
+
+id(index) ::= "gload <index>"
+
+int(value) ::= "iconst <value>"
 
 add(a, b) ::=<<
 <a>
@@ -92,12 +110,13 @@ eq(a, b) ::=<<
 ieq
 >>
 
-neq(a, b) ::=<<
-<a>
-<b>
-ineq
+neq(a,b,i) ::=<<
+<not(eq(a,b),i)>
 >>
 
-id(id) ::= "gload <id>"
-
-int(int) ::= "iconst <int>"
+assertTrue() ::=<<
+<eq(int("1"),int("1"))>
+>>
+assertFalse() ::=<<
+<eq(int("1"),int("2"))>
+>>
