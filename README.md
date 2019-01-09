@@ -10,6 +10,6 @@ Repository für das Praktikum des Kurses "Formale Sprachen und Übersetzertechni
 - Praktikum 5: `src\main\{antlr4,java}\de\mnh\praktfive` und `praktfive/`
 - Praktikum 7: `src\main\{antlr4,java,test}\de\mnh\praktseven` und `praktseven/`
 
-## Befehler für Graphviz
+## Befehle für Graphviz
 
 `dot -Tpng cymbol.dot > cymbol.png`

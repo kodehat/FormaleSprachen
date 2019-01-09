@@ -18,7 +18,7 @@ import java.util.Collection;
 import static org.junit.Assert.assertEquals;
 
 @RunWith(Parameterized.class)
-public class PCodeTester {
+public class PCodeTest {
 
     private PrintStream originalSystemOut;
     private ByteArrayOutputStream systemOutContent;
